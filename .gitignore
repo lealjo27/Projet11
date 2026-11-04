@@ -1,0 +1,14 @@
+# 1. Ignorer tout ce qui se trouve dans le dossier courant
+/*
+
+# 2. Exceptions : autoriser les fichiers racines explicites
+!.gitignore
+!gui.py
+!app.py
+!readme.md
+!README.md
+
+# 3. Exception pour le dossier models et son fichier .zip
+!models/
+models/*
+!models/dqn_exp12_750k_final.zip
