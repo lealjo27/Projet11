@@ -1,7 +1,8 @@
 fastapi
 uvicorn
 pydantic
-gymnasium
+gymnasium[box2d]
+swig
 stable-baselines3
 opencv-python-headless
 numpy
