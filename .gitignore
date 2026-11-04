@@ -7,6 +7,7 @@
 !app.py
 !readme.md
 !README.md
+!requirements.txt
 
 # 3. Exception pour le dossier models et son fichier .zip
 !models/

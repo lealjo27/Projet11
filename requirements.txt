@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+pydantic
+gymnasium
+stable-baselines3
+opencv-python-headless
+numpy
+pandas
+plotly
+streamlit
+python-dotenv
