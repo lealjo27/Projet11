@@ -29,7 +29,6 @@ Une phase d'analyse expérimentale approfondie a permis de comparer deux grandes
 
 | Critère / Algorithme | 🤖 DQN (Deep Q-Network) | ⚡ PPO (Proximal Policy Optimization) |
 | :--- | :--- | :--- |
-| **Type de Politique** | **Off-Policy** (Replay Buffer) | **On-Policy** (Actor-Critic) |
 | **Efficacité d'Échantillonnage** | **Excellente** (Réutilisation des transitions) | **Modérée** (Nécessite plus d'interactions) |
 | **Stabilité sur Actions Discrètes** | **Très haute** (Score moyen > 200) | Progression régulière mais variance élevée |
 | **Résultat d'Expérimentation** | **Optimal (Expérience 12)** | Performance inférieure sur 750k timesteps |
@@ -139,3 +138,11 @@ uv run streamlit run gui.py
 
 - Comparaison directe sous **conditions initiales strictement identiques (Seed fixée)**.
 - Double vidéo et comparaison parallèle des KPIs (Score final, Pas de temps, Statut d'atterrissage).
+
+---
+
+## 👤 Auteur
+
+**Jo — [@lealjo27](https://github.com/lealjo27)**
+
+Projet réalisé dans le cadre de la formation **AI Engineer OpenClassrooms**.
