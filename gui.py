@@ -130,7 +130,7 @@ def generer_dashboard_analytique(data_partie, suffixe_titre=""):
         title=f"Distribution des actions ({suffixe_titre})",
         hole=0.3,
     )
-    st.plotly_chart(fig_pie, use_container_width=True)
+    st.plotly_chart(fig_pie, width='stretch')
 
     # 2. Progression du score
     st.subheader(f"📈 Évolution du Score Cumulé {suffixe_titre}")
@@ -143,7 +143,7 @@ def generer_dashboard_analytique(data_partie, suffixe_titre=""):
         hover_data=["reward", "Action_Label"],
     )
     fig_line.update_traces(line_color="#1f77b4", line_width=3)
-    st.plotly_chart(fig_line, use_container_width=True)
+    st.plotly_chart(fig_line, width='stretch')
 
     # 3. Trajectoire 2D
     st.subheader(f"🗺️ Trajectoire 2D du Module Spatial {suffixe_titre}")
@@ -175,7 +175,7 @@ def generer_dashboard_analytique(data_partie, suffixe_titre=""):
         opacity=0.6,
         line_width=0,
     )
-    st.plotly_chart(fig_scatter, use_container_width=True)
+    st.plotly_chart(fig_scatter, width='stretch')
 
     st.divider()
 
@@ -196,7 +196,7 @@ def generer_dashboard_analytique(data_partie, suffixe_titre=""):
             },
             barmode="stack",
         )
-        st.plotly_chart(fig_bar_alt, use_container_width=True)
+        st.plotly_chart(fig_bar_alt, width='stretch')
 
     with col_adv2:
         st.markdown("**Selon la Vitesse Verticale**")
@@ -211,7 +211,7 @@ def generer_dashboard_analytique(data_partie, suffixe_titre=""):
             },
             barmode="group",
         )
-        st.plotly_chart(fig_bar_vit, use_container_width=True)
+        st.plotly_chart(fig_bar_vit, width='stretch')
 
     st.divider()
 
@@ -241,8 +241,8 @@ def generer_dashboard_analytique(data_partie, suffixe_titre=""):
         text_auto=".2f",
         color="Circonstance (Altitude)",
     )
-    st.plotly_chart(fig_stats, use_container_width=True)
-    st.dataframe(stats_df, use_container_width=True)
+    st.plotly_chart(fig_stats, width='stretch')
+    st.dataframe(stats_df, width='stretch')
 
 
 # ------------------------------------------------------------------------------
@@ -266,7 +266,7 @@ if "play_data" in st.session_state:
         video_b64 = data["video"]
         video_html = f"""
             <div style="display: flex; justify-content: center; align-items: center; width: 100%;">
-        <video style="width: 608px; max-height: 400px; object-fit: contain;" autoplay loop muted playsinline controls>
+        <video style="width: 100%; max-height: 400px; object-fit: contain;" autoplay loop muted playsinline controls>
             <source src="data:video/mp4;base64,{video_b64}" type="video/mp4">
             Votre navigateur ne supporte pas la lecture de cette vidéo.
         </video>
@@ -310,7 +310,7 @@ if "compare_data" in st.session_state:
             v_b64 = data_nw["video"]
             v_html = f"""
                 <div style="display: flex; justify-content: center; align-items: center; width: 100%;">
-                    <video style="width: 608px; max-height: 400px; object-fit: contain;"   muted playsinline controls>
+                    <video style="width: 100%; max-height: 400px; object-fit: contain;"   muted playsinline controls>
                         <source src="data:video/mp4;base64,{v_b64}" type="video/mp4">
                         Votre navigateur ne supporte pas la lecture de cette vidéo.
                     </video>
@@ -335,7 +335,7 @@ if "compare_data" in st.session_state:
             v_b64 = data_w["video"]
             v_html = f"""
                 <div style="display: flex; justify-content: center; align-items: center; width: 100%;">
-                    <video style="width: 608px; max-height: 400px; object-fit: contain;"   muted playsinline controls>
+                    <video style="width: 100%; max-height: 400px; object-fit: contain;"   muted playsinline controls>
                         <source src="data:video/mp4;base64,{v_b64}" type="video/mp4">
                         Votre navigateur ne supporte pas la lecture de cette vidéo.
                     </video>
@@ -404,7 +404,7 @@ if "compare_data" in st.session_state:
                 title="Distribution des actions (Sans Vent)",
                 hole=0.3,
             )
-            st.plotly_chart(fig_pie_nw, use_container_width=True)
+            st.plotly_chart(fig_pie_nw, width='stretch')
         with c2:
             st.markdown("#### 💨 Avec Vent")
             fig_pie_w = px.pie(
@@ -413,7 +413,7 @@ if "compare_data" in st.session_state:
                 title="Distribution des actions (Avec Vent)",
                 hole=0.3,
             )
-            st.plotly_chart(fig_pie_w, use_container_width=True)
+            st.plotly_chart(fig_pie_w, width='stretch')
 
         st.divider()
 
@@ -433,7 +433,7 @@ if "compare_data" in st.session_state:
                 hover_data=["reward", "Action_Label"],
             )
             fig_line_nw.update_traces(line_color="#1f77b4", line_width=3)
-            st.plotly_chart(fig_line_nw, use_container_width=True)
+            st.plotly_chart(fig_line_nw, width='stretch')
         with c2:
             st.markdown("#### 💨 Avec Vent")
             fig_line_w = px.line(
@@ -445,7 +445,7 @@ if "compare_data" in st.session_state:
                 hover_data=["reward", "Action_Label"],
             )
             fig_line_w.update_traces(line_color="#ef553b", line_width=3)
-            st.plotly_chart(fig_line_w, use_container_width=True)
+            st.plotly_chart(fig_line_w, width='stretch')
 
         st.divider()
 
@@ -473,10 +473,10 @@ if "compare_data" in st.session_state:
 
         with c1:
             st.markdown("#### 🛑 Sans Vent")
-            st.plotly_chart(tracer_scatter(df_nw, "Profil de Vol (Sans Vent)"), use_container_width=True)
+            st.plotly_chart(tracer_scatter(df_nw, "Profil de Vol (Sans Vent)"), width='stretch')
         with c2:
             st.markdown("#### 💨 Avec Vent")
-            st.plotly_chart(tracer_scatter(df_w, "Profil de Vol (Avec Vent)"), use_container_width=True)
+            st.plotly_chart(tracer_scatter(df_w, "Profil de Vol (Avec Vent)"), width='stretch')
 
         st.divider()
 
@@ -494,7 +494,7 @@ if "compare_data" in st.session_state:
                 title="Actions par Altitude (Sans Vent)",
                 barmode="stack",
             )
-            st.plotly_chart(fig_bar_nw, use_container_width=True)
+            st.plotly_chart(fig_bar_nw, width='stretch')
         with c2:
             st.markdown("#### 💨 Avec Vent")
             fig_bar_w = px.histogram(
@@ -504,7 +504,7 @@ if "compare_data" in st.session_state:
                 title="Actions par Altitude (Avec Vent)",
                 barmode="stack",
             )
-            st.plotly_chart(fig_bar_w, use_container_width=True)
+            st.plotly_chart(fig_bar_w, width='stretch')
 
         st.divider()
 
@@ -534,8 +534,8 @@ if "compare_data" in st.session_state:
                 text_auto=".2f",
                 color="Circonstance (Altitude)",
             )
-            st.plotly_chart(fig_stats_nw, use_container_width=True)
-            st.dataframe(stats_nw, use_container_width=True)
+            st.plotly_chart(fig_stats_nw, width='stretch')
+            st.dataframe(stats_nw, width='stretch')
 
         with c2:
             st.markdown("#### 💨 Avec Vent")
@@ -548,5 +548,5 @@ if "compare_data" in st.session_state:
                 text_auto=".2f",
                 color="Circonstance (Altitude)",
             )
-            st.plotly_chart(fig_stats_w, use_container_width=True)
-            st.dataframe(stats_w, use_container_width=True)
+            st.plotly_chart(fig_stats_w, width='stretch')
+            st.dataframe(stats_w, width='stretch')
