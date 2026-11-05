@@ -1,17 +1,30 @@
-lancer fastapi :  uv run uvicorn app:app --reload
-Lancer Streamlit : uv run streamlit run gui.py
-Lancer tensorboard : tensorboard --logdir ./dqn_lunar_tensorboard/
+# 🚀 Project 11 - LunarLander-v3 RL Agent (DQN vs PPO, Benchmark & Deployment)
 
+Ce projet propose une solution complète d'**Apprentissage par Renforcement (RL)** sur l'environnement **LunarLander-v3** de Gymnasium[cite: 1, 3]. 
+Il couvre la totalité du cycle de développement :
+1. **Études et Benchmark Algorithmique** : Comparaison approfondie entre **DQN** (Deep Q-Network) et **PPO** (Proximal Policy Optimization)[cite: 1, 3].
+2. **Monitoring & Logs** : Suivi fin de la convergence via **TensorBoard**[cite: 1].
+3. **Architecture Découplée (Production)** :
+   * Backend Inférence & Simulation (**FastAPI**)[cite: 1, 3, 4].
+   * Frontend Interactif & Tableau de Bord (**Streamlit & Plotly**)[cite: 1, 3].
 
-Pour rédiger le fichier `README.md` complet et structuré de ton projet (Projet 11 - LunarLander-v3), voici le contenu exact au format Markdown.
+---
 
-Crée le fichier `README.md` à la racine de ton dossier `/home/jo/Documents/uv/Projet_11/` et insère le texte ci-dessous :
+## 🔬 Benchmark Algorithmique : DQN vs PPO
 
-```markdown
-# 🚀 Project 11 - LunarLander-v3 RL Agent Deployment
+Pour résoudre le problème d'atterrissage sur la lune, deux grandes familles d'algorithmes de RL continu/discret ont été comparées sur **LunarLander-v3**[cite: 1, 3] :
 
-Ce projet propose une application d'**Apprentissage par Renforcement (RL)** basée sur l'environnement **LunarLander-v3** de Gymnasium[cite: 1, 2]. 
-Il met en œuvre une architecture découplée isolant le moteur d'inférence/simulation (**FastAPI**) du frontend de visualisation et d'analyse (**Streamlit & Plotly**)[cite: 1, 2].
+### 1. DQN (Deep Q-Network) — *Off-Policy*
+* **Principe** : Algorithme basé sur la fonction de valeur $Q(s, a)$ avec l'utilisation d'un *Replay Buffer* pour casser la corrélation temporelle des données et d'un *Target Network* pour stabiliser les cibles de Bellman[cite: 1].
+* **Constat & Résultats** :
+  * DQN s'est révélé extrêmement performant sur les espaces d'action discrets de LunarLander (4 actions discrets)[cite: 3].
+  * **Expérience 12 (750k timesteps)** : C'est la configuration optimale retenue pour le déploiement[cite: 3, 4]. Elle atteint un score moyen impressionnant de **232.90 ± 32.85** (considéré comme résolu et hautement stable)[cite: 3].
+
+### 2. PPO (Proximal Policy Optimization) — *On-Policy*
+* **Principe** : Algorithme *Actor-Critic* optimisant directement la politique via un découpage du gradient (clipping ratio) pour éviter des mises à jour trop violentes de la politique.
+* **Analyse Comparative avec DQN** :
+  * **Efficacité d'échantillonnage (*Sample Efficiency*)** : DQN a montré une meilleure efficacité sur les données grâce à la réutilisation des transitions passées stockées dans le *Replay Buffer*, alors que PPO nécessite plus d'interactions fraîches avec l'environnement (*On-Policy*).
+  * **Stabilité & Variance** : Bien que PPO offre une montée en score plus régulière au début, DQN (avec une phase d'exploration bien réglée et un volume de 750k pas) a convergé vers une politique d'atterrissage nettement plus précise avec un score final moyen plus élevé sur cette tâche spécifique[cite: 3].
 
 ---
 
@@ -19,14 +32,15 @@ Il met en œuvre une architecture découplée isolant le moteur d'inférence/sim
 
 ```text
 Projet_11/
-├── app.py                            # Backend API (FastAPI) pour l'inférence et la simulation[cite: 1, 2]
-├── gui.py                            # Frontend GUI (Streamlit & Plotly) pour l'animation et le Dashboard[cite: 1, 2]
+├── logs/                             # Enregistrements TensorBoard (fichiers d'événements SB3)[cite: 1]
 ├── models/
-│   └── dqn_exp12_750k_final.zip      # Modèle DQN entraîné (Stable-Baselines3)[cite: 1]
-├── .env                              # Variables d'environnement locales (API_URL)[cite: 1, 2]
-├── .gitignore                        # Fichier d'exclusion pour Git[cite: 1, 2]
-├── requirements.txt                  # Dépendances de déploiement Cloud (Render / Streamlit Cloud)[cite: 1, 2]
-└── README.md                         # Documentation du projet[cite: 1, 2]
+│   └── dqn_exp12_750k_final.zip      # Modèle DQN optimal entraîné à 750k timesteps[cite: 1, 3, 4]
+├── app.py                            # FastAPI Backend (Inférence, simulation & comparaison)[cite: 1, 3, 4]
+├── gui.py                            # Streamlit Frontend (Relecture MP4, Dashboard Plotly & Visualisation)[cite: 1, 3]
+├── .env                              # Variables d'environnement locales (API_URL)[cite: 1, 3]
+├── .gitignore                        # Configuration d'exclusion Git[cite: 1, 3]
+├── requirements.txt                  # Dépendances pour Render & Streamlit Cloud[cite: 1, 3]
+└── README.md                         # Documentation complète du projet[cite: 1, 3]
 
 ```
 
@@ -36,18 +50,18 @@ Projet_11/
 
 ### 1. Installation des dépendances
 
-Pour installer les dépendances du projet localement avec `uv` (ou `pip` dans votre environnement virtuel) :
+Pour installer les paquets requis avec `uv` (ou `pip` dans votre environnement virtuel) :
 
 ```bash
 # Avec uv
-uv add fastapi uvicorn gymnasium stable-baselines3 opencv-python-headless numpy pandas plotly streamlit python-dotenv
+uv add fastapi uvicorn gymnasium stable-baselines3 tensorboard opencv-python-headless imageio imageio-ffmpeg numpy pandas plotly streamlit python-dotenv
 
-# Ou avec pip
+# Avec pip
 pip install -r requirements.txt
 
 ```
 
-### 2. Variables d'environnement (.env)
+### 2. Configuration d'environnement (.env)
 
 Créez un fichier `.env` à la racine de votre projet :
 
@@ -58,38 +72,62 @@ API_URL=[http://127.0.0.1:8000](http://127.0.0.1:8000)
 
 ---
 
-## 🚀 Utilisation & Execution Locale
+## 📈 Monitoring & Analyse de l'Entraînement avec TensorBoard
 
-Le système nécessite l'exécution séparée du backend et du frontend dans **deux terminaux**.
+Pendant les phases d'expérimentation et d'évaluation comparative (DQN vs PPO), les métriques ont été journalisées dans le dossier `./logs/`.
 
-### 1. Démarrer l'API FastAPI Backend
+### Démarrage de TensorBoard
 
-Dans le premier terminal :
+```bash
+tensorboard --logdir=./logs/
+
+```
+
+* **URL d'accès** : [http://localhost:6006/](http://localhost:6006/)
+
+
+* **Métriques analysées** :
+* `rollout/ep_rew_mean` : Récompense moyenne accumulée (passage du seuil de succès > 200).
+
+
+* `rollout/ep_len_mean` : Durée moyenne des épisodes (efficacité du vol).
+* `train/loss` : Perte de la fonction de valeur et stabilisation du réseau.
+
+
+
+---
+
+## 🚀 Utilisation & Exécution Locale
+
+L'application repose sur une exécution dissociée du backend et du frontend dans deux terminaux séparés.
+
+### 1. Démarrer l'API Backend (FastAPI)
 
 ```bash
 uv run uvicorn app:app --reload
 
 ```
 
-* **Interface OpenAPI (Swagger UI)** : [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+* **Interface Swagger (Docs API)** : [http://127.0.0.1:8000/docs](https://www.google.com/search?q=http://127.0.0.1:8000/docs)
 
 
 * **Endpoints HTTP principaux** :
-* `GET /` : Vérification du statut de l'API.
+* `GET /` : Endpoint de contrôle de santé (*Healthcheck*).
 
 
-* `POST /predict` : Reçoit un état de 8 variables et renvoie l'action déterministe ($0, 1, 2, 3$).
+* `POST /predict` : Prend les 8 variables d'état et retourne l'action déterministe ($0, 1, 2, 3$).
 
 
-* `GET /play` : Simule un épisode complet côté serveur et retourne la trajectoire ainsi que l'animation MP4 (Base64).
+* `GET /play` : Simule un épisode complet, renvoie les données de trajectoire et l'animation MP4 encodée en Base64.
+
+
+* `GET /play_compare` : Exécute deux simulations simultanées sous la **MÊME seed** (*Sans Vent* vs *Avec Vent*) pour étudier la robustesse du modèle face aux turbulences.
 
 
 
 
 
-### 2. Démarrer l'Interface Streamlit Frontend
-
-Dans le second terminal :
+### 2. Démarrer l'Interface Frontend (Streamlit)
 
 ```bash
 uv run streamlit run gui.py
@@ -102,35 +140,26 @@ uv run streamlit run gui.py
 
 ---
 
-## 📊 Fonctionnalités du Tableau de Bord (Streamlit)
+## 📊 Tableau de Bord Interactive (Streamlit & Plotly)
 
-1. **Relecture Vidéo en Direct** :
-
-
-* Déclenchement des simulations via l'endpoint `GET /play` de l'API FastAPI.
+1. **Analyse de Vol Unique (`/play`)** :
 
 
-* Lecteur vidéo HTML5 natif pour une relecture fluide de l'atterrissage.
+* Relecture vidéo fluide de l'atterrissage via lecteur HTML5 natif.
+
+
+* Profil 2D de la trajectoire (Position X vs Altitude Y), camembert de distribution des réacteurs allumés, et évolution des scores cumulés.
 
 
 
 
-2. **Dashboard Analytique Interactive (Plotly)** :
+2. **Mode Comparatif de Perturbation (`/play_compare`)** :
 
 
-* **KPIs Globaux** : Score total, durée (pas), statut (succès/échec), score moyen par pas.
+* Analyse côte à côte avec des conditions initiales strictement identiques (*Seed fixée*).
 
 
-* **Distribution des Actions (Plotly Pie)** : Proportions des décisions (Inaction, Moteur Principal, Moteurs Latéraux).
-
-
-* **Score Cumulé (Plotly Line)** : Évolution de la récompense cumulée au fil des pas de temps.
-
-
-* **Profil de Vol 2D (Plotly Scatter)** : Trajectoire spatiale ($Position X$ vs $Altitude Y$) colorée par action avec zone d'atterrissage repère.
-
-
-* **Circonstances de Vol** : Histogrammes et barres d'erreurs (moyennes et écarts-types) de la récompense selon les paliers d'altitude et les vitesses verticales.
+* Évaluation de la résistance du pilotage DQN face au vent (comparaison des trajectoires, temps de vol et pénalités de carburant).
 
 
 
@@ -140,10 +169,10 @@ uv run streamlit run gui.py
 
 ## 🌐 Déploiement Cloud
 
-* **Backend FastAPI** : Déployé sur **Render** (`https://<votre-api>.onrender.com`).
+* **Backend FastAPI** : Hébergé sur **Render** (`https://<votre-api>.onrender.com`).
 
 
-* **Frontend Streamlit** : Déployé sur **Streamlit Community Cloud** avec la variable de secret TOML `API_URL` configurée pour pointer vers l'API Render.
+* **Frontend Streamlit** : Hébergé sur **Streamlit Community Cloud** avec la variable d'environnement/secret TOML `API_URL` configurée pour communiquer avec l'API sur Render.
 
 
 
