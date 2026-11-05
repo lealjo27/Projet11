@@ -10,6 +10,7 @@ import cv2  # opencv-python
 
 import os, tempfile
 import imageio
+import random
 
 # Variable globale pour stocker le modèle en mémoire
 model = None
@@ -60,10 +61,24 @@ def predict_action(input_data: StateInput):
 
 
 @app.get("/play")
-def play_episode():
-    """Simule une partie complète et renvoie la trajectoire avec les images du jeu."""
+def play_episode(enable_wind: bool = False, wind_power: float = 15.0):
+
+    """
+    Exécute un épisode complet avec ou sans vent.
+    - enable_wind: bool (Activer/Désactiver le vent)
+    - wind_power: float (Force du vent, par défaut 15.0)
+    """
     if model is None:
         raise HTTPException(status_code=500, detail="Modèle RL non disponible.")
+
+    # Passage des paramètres de vent à l'environnement Gymnasium
+    env_kwargs = {}
+    if enable_wind:
+        env_kwargs = {
+            "enable_wind": True,
+            "wind_idx": 0,
+            "var_coord": wind_power
+        }
     
     # On spécifie render_mode="rgb_array" pour récupérer les images du jeu
     env = gym.make("LunarLander-v3", render_mode="rgb_array")
@@ -106,4 +121,78 @@ def play_episode():
         "steps": len(trajectory),
         "trajectory": trajectory,
         "video": video_b64
+    }
+
+@app.get("/play_compare")
+def play_compare(wind_power: float = 15.0, seed: int = None):
+    """
+    Simule deux parties à partir du MÊME état initial (seed identique) :
+    une SANS vent et une AVEC vent.
+    """
+    if model is None:
+        raise HTTPException(status_code=500, detail="Modèle RL non disponible.")
+
+    # Si aucune seed n'est fournie, on en génère une aléatoirement
+    if seed is None:
+        seed = random.randint(0, 10000)
+
+    results = {}
+
+    for wind_enabled in [False, True]:
+        env_kwargs = {}
+        if wind_enabled:
+            env_kwargs = {
+                "enable_wind": True,
+                "wind_power": wind_power  # La force du vent (ex: 15.0)
+            }
+
+        env = gym.make("LunarLander-v3", render_mode="rgb_array", **env_kwargs)
+        obs, info = env.reset(seed=seed)  # Seed identique fixée ici !
+
+        trajectory = []
+        frames = []
+        total_reward = 0.0
+        done = False
+
+        while not done:
+            action, _ = model.predict(obs, deterministic=True)
+            frames.append(env.render())
+
+            next_obs, reward, terminated, truncated, info = env.step(action)
+
+            trajectory.append({
+                "state": obs.tolist(),
+                "action": int(action),
+                "reward": float(reward)
+            })
+
+            total_reward += float(reward)
+            obs = next_obs
+            done = terminated or truncated
+
+        env.close()
+
+ # Encodage de la vidéo MP4 via ton dossier/fichier temporaire (libx264/imageio)
+        video_b64 = ""
+        if frames:
+            with tempfile.TemporaryDirectory() as tmp:
+                path = os.path.join(tmp, "episode.mp4")
+                imageio.mimsave(
+                    path, frames, fps=30, codec="libx264", pixelformat="yuv420p"
+                )
+                with open(path, "rb") as f:
+                    video_b64 = base64.b64encode(f.read()).decode("utf-8")
+
+        key = "with_wind" if wind_enabled else "no_wind"
+        results[key] = {
+            "total_reward": total_reward,
+            "steps": len(trajectory),
+            "trajectory": trajectory,
+            "video": video_b64,
+        }
+
+    return {
+        "seed": seed,
+        "no_wind": results["no_wind"],
+        "with_wind": results["with_wind"],
     }
