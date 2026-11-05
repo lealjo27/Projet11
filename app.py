@@ -8,6 +8,8 @@ from stable_baselines3 import DQN
 import base64
 import cv2  # opencv-python
 
+import os, tempfile
+import imageio
 
 # Variable globale pour stocker le modèle en mémoire
 model = None
@@ -68,6 +70,8 @@ def play_episode():
     obs, info = env.reset()
     
     trajectory = []
+    frames = []
+        
     total_reward = 0.0
     done = False
     
@@ -75,11 +79,7 @@ def play_episode():
         action, _ = model.predict(obs, deterministic=True)
         
         # Capture de l'image de la frame courante
-        frame = env.render()
-        
-        # Encodage de la frame en image JPEG base64 (pour l'envoyer facilement en JSON)
-        _, buffer = cv2.imencode('.jpg', frame)
-        frame_b64 = base64.b64encode(buffer).decode('utf-8')
+        frames.append(env.render())
         
         next_obs, reward, terminated, truncated, info = env.step(action)
         
@@ -87,17 +87,23 @@ def play_episode():
             "state": obs.tolist(),
             "action": int(action),
             "reward": float(reward),
-            "frame": frame_b64  # Image réelle de la frame
-        })
+            })
         
         total_reward += float(reward)
         obs = next_obs
         done = terminated or truncated
         
     env.close()
+
+    with tempfile.TemporaryDirectory() as tmp:
+        path = os.path.join(tmp, "episode.mp4")
+        imageio.mimsave(path, frames, fps=30, codec="libx264",pixelformat="yuv420p")
+        with open(path, "rb") as f:
+            video_b64 = base64.b64encode(f.read()).decode("utf-8")
     
     return {
         "total_reward": total_reward,
         "steps": len(trajectory),
-        "trajectory": trajectory
+        "trajectory": trajectory,
+        "video": video_b64
     }

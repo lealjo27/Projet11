@@ -60,30 +60,12 @@ if "play_data" in st.session_state:
     
     st.divider()
     
-    # 2. Animation pas à pas de la partie
-    st.subheader("Animation de la partie")
-    
-    speed = st.slider("Vitesse de lecture (secondes par pas)", 0.01, 0.2, 0.05, 0.01)
-    
+   
 
-    if st.button("▶️ Jouer l'animation vidéo"):
-        image_spot = st.empty()
-        status_spot = st.empty()
-        
-        actions_map = {0: "Inaction", 1: "Moteur Gauche", 2: "Moteur Principal", 3: "Moteur Droit"}
-        
-        for idx, step in enumerate(data["trajectory"]):
-            # Si la frame image est disponible dans le JSON
-            if "frame" in step:
-                img_bytes = base64.b64decode(step["frame"])
-                image_spot.image(img_bytes, width='stretch')
-                
-            status_spot.info(
-                f"Pas {idx+1}/{data['steps']} | "
-                f"Action : **{actions_map.get(step['action'], 'Inconnue')}** | "
-                f"Récompense : {step['reward']:.2f}"
-            )
-            time.sleep(speed)
+    if st.button("▶️ Jouer la vidéo"):
+        video_bytes = base64.b64decode(data["video"])
+        st.video(video_bytes, format="video/mp4", autoplay=True)
+
 
     if st.button("▶ Voir les stats", type="secondary"): 
             st.session_state["show_stats"] = True
