@@ -1,31 +1,31 @@
 ```markdown
 # 🚀 Project 11 - LunarLander-v3 RL Agent (DQN vs PPO, Benchmark & Deployment)
 
-Ce projet propose une solution complète d'**Apprentissage par Renforcement (RL)** sur l'environnement **LunarLander-v3** de Gymnasium[cite: 1, 3]. 
+Ce projet propose une solution complète d'**Apprentissage par Renforcement (RL)** sur l'environnement **LunarLander-v3** de Gymnasium. 
 Il couvre la totalité du cycle de développement :
-1. **Études et Benchmark Algorithmique** : Comparaison approfondie entre **DQN** (Deep Q-Network) et **PPO** (Proximal Policy Optimization)[cite: 1, 3].
-2. **Monitoring & Logs** : Suivi fin de la convergence via **TensorBoard**[cite: 1].
+1. **Études et Benchmark Algorithmique** : Comparaison approfondie entre **DQN** (Deep Q-Network) et **PPO** (Proximal Policy Optimization).
+2. **Monitoring & Logs** : Suivi fin de la convergence de l'apprentissage via **TensorBoard**.
 3. **Architecture Découplée (Production)** :
-   * Backend Inférence & Simulation (**FastAPI**)[cite: 1, 3, 4].
-   * Frontend Interactif & Tableau de Bord (**Streamlit & Plotly**)[cite: 1, 3].
+   * Backend Inférence & Simulation (**FastAPI**).
+   * Frontend Interactif & Tableau de Bord (**Streamlit & Plotly**).
 
 ---
 
 ## 🔬 Benchmark Algorithmique : DQN vs PPO
 
-Pour résoudre le problème d'atterrissage sur la lune, deux grandes familles d'algorithmes de RL continu/discret ont été comparées sur **LunarLander-v3**[cite: 1, 3] :
+Pour résoudre le problème d'atterrissage sur la lune, deux grandes familles d'algorithmes de RL continu/discret ont été comparées sur **LunarLander-v3** :
 
 ### 1. DQN (Deep Q-Network) — *Off-Policy*
-* **Principe** : Algorithme basé sur la fonction de valeur $Q(s, a)$ avec l'utilisation d'un *Replay Buffer* pour casser la corrélation temporelle des données et d'un *Target Network* pour stabiliser les cibles de Bellman[cite: 1].
+* **Principe** : Algorithme basé sur la fonction de valeur $Q(s, a)$ avec l'utilisation d'un *Replay Buffer* pour casser la corrélation temporelle des données et d'un *Target Network* pour stabiliser les cibles de Bellman.
 * **Constat & Résultats** :
-  * DQN s'est révélé extrêmement performant sur les espaces d'action discrets de LunarLander (4 actions discrets)[cite: 3].
-  * **Expérience 12 (750k timesteps)** : C'est la configuration optimale retenue pour le déploiement[cite: 3, 4]. Elle atteint un score moyen impressionnant de **232.90 ± 32.85** (considéré comme résolu et hautement stable)[cite: 3].
+  * DQN s'est révélé extrêmement performant sur les espaces d'action discrets de LunarLander (4 actions discrets).
+  * **Expérience 12 (750k timesteps)** : C'est la configuration optimale retenue pour le déploiement. Elle atteint un score moyen de **232.90 ± 32.85** (considéré comme résolu et hautement stable).
 
 ### 2. PPO (Proximal Policy Optimization) — *On-Policy*
 * **Principe** : Algorithme *Actor-Critic* optimisant directement la politique via un découpage du gradient (clipping ratio) pour éviter des mises à jour trop violentes de la politique.
 * **Analyse Comparative avec DQN** :
   * **Efficacité d'échantillonnage (*Sample Efficiency*)** : DQN a montré une meilleure efficacité sur les données grâce à la réutilisation des transitions passées stockées dans le *Replay Buffer*, alors que PPO nécessite plus d'interactions fraîches avec l'environnement (*On-Policy*).
-  * **Stabilité & Variance** : Bien que PPO offre une montée en score plus régulière au début, DQN (avec une phase d'exploration bien réglée et un volume de 750k pas) a convergé vers une politique d'atterrissage nettement plus précise avec un score final moyen plus élevé sur cette tâche spécifique[cite: 3].
+  * **Stabilité & Variance** : Bien que PPO offre une montée en score plus régulière au début, DQN (avec une phase d'exploration bien réglée et un volume de 750k pas) a convergé vers une politique d'atterrissage nettement plus précise avec un score final moyen plus élevé sur cette tâche spécifique.
 
 ---
 
@@ -33,15 +33,15 @@ Pour résoudre le problème d'atterrissage sur la lune, deux grandes familles d'
 
 ```text
 Projet_11/
-├── logs/                             # Enregistrements TensorBoard (fichiers d'événements SB3)[cite: 1]
+├── logs/                             # Enregistrements TensorBoard (fichiers d'événements SB3)
 ├── models/
-│   └── dqn_exp12_750k_final.zip      # Modèle DQN optimal entraîné à 750k timesteps[cite: 1, 3, 4]
-├── app.py                            # FastAPI Backend (Inférence, simulation & comparaison)[cite: 1, 3, 4]
-├── gui.py                            # Streamlit Frontend (Relecture MP4, Dashboard Plotly & Visualisation)[cite: 1, 3]
-├── .env                              # Variables d'environnement locales (API_URL)[cite: 1, 3]
-├── .gitignore                        # Configuration d'exclusion Git[cite: 1, 3]
-├── requirements.txt                  # Dépendances pour Render & Streamlit Cloud[cite: 1, 3]
-└── README.md                         # Documentation complète du projet[cite: 1, 3]
+│   └── dqn_exp12_750k_final.zip      # Modèle DQN optimal entraîné à 750k timesteps
+├── app.py                            # FastAPI Backend (Inférence, simulation & comparaison)
+├── gui.py                            # Streamlit Frontend (Relecture MP4, Dashboard Plotly & Visualisation)
+├── .env                              # Variables d'environnement locales (API_URL)
+├── .gitignore                        # Configuration d'exclusion Git
+├── requirements.txt                  # Dépendances pour Render & Streamlit Cloud
+└── README.md                         # Documentation complète du projet
 
 ```
 
@@ -85,12 +85,8 @@ tensorboard --logdir=./logs/
 ```
 
 * **URL d'accès** : [http://localhost:6006/](http://localhost:6006/)
-
-
 * **Métriques analysées** :
 * `rollout/ep_rew_mean` : Récompense moyenne accumulée (passage du seuil de succès > 200).
-
-
 * `rollout/ep_len_mean` : Durée moyenne des épisodes (efficacité du vol).
 * `train/loss` : Perte de la fonction de valeur et stabilisation du réseau.
 
@@ -110,21 +106,11 @@ uv run uvicorn app:app --reload
 ```
 
 * **Interface Swagger (Docs API)** : [http://127.0.0.1:8000/docs](https://www.google.com/search?q=http://127.0.0.1:8000/docs)
-
-
 * **Endpoints HTTP principaux** :
 * `GET /` : Endpoint de contrôle de santé (*Healthcheck*).
-
-
 * `POST /predict` : Prend les 8 variables d'état et retourne l'action déterministe ($0, 1, 2, 3$).
-
-
 * `GET /play` : Simule un épisode complet, renvoie les données de trajectoire et l'animation MP4 encodée en Base64.
-
-
 * `GET /play_compare` : Exécute deux simulations simultanées sous la **MÊME seed** (*Sans Vent* vs *Avec Vent*) pour étudier la robustesse du modèle face aux turbulences.
-
-
 
 
 
@@ -137,32 +123,18 @@ uv run streamlit run gui.py
 
 * **Accès web local** : [http://localhost:8501](http://localhost:8501)
 
-
-
 ---
 
-## 📊 Tableau de Bord Interactive (Streamlit & Plotly)
+## 📊 Tableau de Bord Interactif (Streamlit & Plotly)
 
 1. **Analyse de Vol Unique (`/play`)** :
-
-
 * Relecture vidéo fluide de l'atterrissage via lecteur HTML5 natif.
-
-
 * Profil 2D de la trajectoire (Position X vs Altitude Y), camembert de distribution des réacteurs allumés, et évolution des scores cumulés.
 
 
-
-
 2. **Mode Comparatif de Perturbation (`/play_compare`)** :
-
-
-* Analyse côte à côte avec des conditions initiales strictement identiques (*Seed fixée*).
-
-
+* Analyse côte à côte avec des conditions initiales strictly identiques (*Seed fixée*).
 * Évaluation de la résistance du pilotage DQN face au vent (comparaison des trajectoires, temps de vol et pénalités de carburant).
-
-
 
 
 
@@ -171,12 +143,10 @@ uv run streamlit run gui.py
 ## 🌐 Déploiement Cloud
 
 * **Backend FastAPI** : Hébergé sur **Render** (`https://<votre-api>.onrender.com`).
-
-
 * **Frontend Streamlit** : Hébergé sur **Streamlit Community Cloud** avec la variable d'environnement/secret TOML `API_URL` configurée pour communiquer avec l'API sur Render.
 
-
-
 ```
+
+Souhaites-tu de l'aide pour faire le `git commit` et le `git push` de cette version finale du README ?
 
 ```
