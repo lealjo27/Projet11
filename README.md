@@ -15,6 +15,7 @@ Application d'**Apprentissage par Renforcement (RL)** basée sur l'environnement
 ## 📌 Sommaire
 
 - [🔬 Benchmark Algorithmique](#-benchmark-algorithmique--dqn-vs-ppo)
+- [🧪 Résultats des Expériences](#-résultats-des-expériences)
 - [🛠️ Architecture du Projet](#️-architecture-du-projet)
 - [⚙️ Prérequis & Installation](#️-prérequis--installation)
 - [📈 Monitoring & Logs (TensorBoard)](#-monitoring--logs-tensorboard)
@@ -35,6 +36,38 @@ Une phase d'analyse expérimentale approfondie a permis de comparer deux grandes
 
 > 🎯 **Résultat Retenu (Expérience 12)** : **232.90 ± 32.85** à 750 000 timesteps
 > *(Environnement résolu et hautement stable)*
+
+---
+
+## 🧪 Résultats des Expériences
+
+Chaque expérience modifie **un seul hyperparamètre** par rapport à la précédente, pour isoler son impact. Les scores sont calculés sur **100 épisodes** d'évaluation.
+
+| Expérience | Hyperparamètre modifié | Valeur | Paramètres inchangés | Objectif visé | Score moyen | Écart-type (σ) | Statut |
+| :--- | :--- | :--- | :--- | :--- | :---: | :---: | :---: |
+| **Exp 0** (Baseline) | Référence initiale | 20 000 steps | Défaut SB3 | Établir le point de départ | -184.48 | 51.00 | ✅ Terminé |
+| **Exp 1** (Volume) | `total_timesteps` | **300 000** | Défaut SB3 | Isoler l'impact de la durée d'entraînement | -46.93 | 34.60 | ✅ Terminé |
+| **Exp 2** (Apprentissage) | `learning_rate` | **`1e-4`** | 300k steps, reste par défaut | Stabiliser la mise à jour des poids | -38.58 | 52.34 | ✅ Terminé |
+| **Exp 3** (Exploration) | `exploration_fraction` | **`0.2`** | 300k steps, `lr=1e-4` | Étendre la phase d'exploration ε-greedy | 7.10 | 107.42 | ✅ Terminé |
+| **Exp 4** (Mémoire) | `buffer_size` | **`100 000`** | 300k steps, `lr=1e-4`, `exp_frac=0.2` | Diversifier le Replay Buffer | -19.14 | 94.40 | ✅ Terminé |
+| **Exp 5** (Démarrage) | `learning_starts` | **`10 000`** | Config Exp 4 | Accumuler des expériences variées avant l'apprentissage | -19.60 | 65.58 | ✅ Terminé |
+| **Exp 6** (Architecture) | `policy_kwargs` | **`net_arch=[128, 128]`** | Config Exp 5 | Augmenter la capacité du réseau | 39.68 | 118.37 | ✅ Terminé |
+| **Exp 7** (Cible) | `target_update_interval` | **`1000`** | Config Exp 6 | Stabiliser la cible d'apprentissage | 30.54 | 73.22 | ✅ Terminé |
+| **Exp 8** (Remise) | `gamma` | **`0.999`** | Config Exp 7 | Tester un horizon temporel long | -45.69 | 22.06 | ✅ Terminé |
+| **Exp 9** (Lot) | `batch_size` | **`128`** | Config Exp 7 (`gamma=0.99`) | Réduire le bruit du gradient | 58.17 | 96.10 | ✅ Terminé |
+| **Exp 10** (Consolidation) | `total_timesteps` | **`500 000`** | Config Exp 9 | Consolider la convergence | **234.87** | **43.72** | 🏆 Résolu |
+| **Exp 11** (Extension 1M) | `total_timesteps` | **`1 000 000`** | Config Exp 10 | Évaluer la stabilité à très long terme | **189.81** | **62.98** | ⚠️ Résolu |
+| **Exp 12** (Volume 750k) | `total_timesteps` | **`750 000`** | Config Exp 10 | Ajuster durée de convergence et régularité | **232.90** | **32.85** | 🥇 **Optimal** |
+| **Exp 13** (Extension 800k) | `total_timesteps` | **`800 000`** | Config Exp 12 | Tester l'impact de 50k steps supplémentaires | **220.08** | **34.99** | 🏆 Résolu |
+
+### 🔎 Analyse
+
+- **Volume d'entraînement** : passer de 20k à 300k steps fait gagner environ 138 points (Exp 0 → 1).
+- **Réseau, lot et durée** : `net_arch=[128, 128]` (Exp 6), `batch_size=128` (Exp 9) et 500k steps (Exp 10) font franchir le seuil de 200.
+- **`gamma=0.999` dégrade le score** (Exp 8) : l'horizon trop long est écarté.
+- **Pas de gain au-delà de 750k** : à 800k (Exp 13) et à 1M (Exp 11), le score baisse.
+- **Choix final : Exp 12.** Son score moyen est proche de l'Exp 10 (232.90 contre 234.87), mais il a l'**écart-type le plus faible** (32.85), donc l'atterrissage est le plus régulier.
+
 
 ---
 
