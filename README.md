@@ -143,14 +143,3 @@ uv run streamlit run gui.py
 ```
 
 ---
-
-### 💻 Commandes Git pour mettre à jour votre dépôt GitHub
-
-Exécutez ces commandes dans le terminal de votre projet pour pousser le nouveau `README.md` nettoyé :
-
-```bash
-git add README.md
-git commit -m "docs: correction de la mise en page et de la structure du README"
-git push origin main
-
-```
