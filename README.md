@@ -56,9 +56,9 @@ Chaque expérience modifie **un seul hyperparamètre** par rapport à la précé
 | **Exp 8** (Remise) | `gamma` | **`0.999`** | Config Exp 7 | Tester un horizon temporel long | -45.69 | 22.06 | ✅ Terminé |
 | **Exp 9** (Lot) | `batch_size` | **`128`** | Config Exp 7 (`gamma=0.99`) | Réduire le bruit du gradient | 58.17 | 96.10 | ✅ Terminé |
 | **Exp 10** (Consolidation) | `total_timesteps` | **`500 000`** | Config Exp 9 | Consolider la convergence | **234.87** | **43.72** | 🏆 Résolu |
-| **Exp 11** (Extension 1M) | `total_timesteps` | **`1 000 000`** | Config Exp 10 | Évaluer la stabilité à très long terme | **189.81** | **62.98** | ⚠️ Résolu |
+| **Exp 11** (Extension 1M) | `total_timesteps` | **`1 000 000`** | Config Exp 10 | Évaluer la stabilité à très long terme | **189.81** | **62.98** |  Terminé |
 | **Exp 12** (Volume 750k) | `total_timesteps` | **`750 000`** | Config Exp 10 | Ajuster durée de convergence et régularité | **232.90** | **32.85** | 🥇 **Optimal** |
-| **Exp 13** (Extension 800k) | `total_timesteps` | **`800 000`** | Config Exp 12 | Tester l'impact de 50k steps supplémentaires | **220.08** | **34.99** | 🏆 Résolu |
+| **Exp 13** (Extension 800k) | `total_timesteps` | **`800 000`** | Config Exp 12 | Tester l'impact de 50k steps supplémentaires | **220.08** | **34.99** | Terminé |
 
 ### 🔎 Analyse
 
