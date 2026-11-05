@@ -10,3 +10,4 @@ pandas
 plotly
 streamlit
 python-dotenv
+imageio
