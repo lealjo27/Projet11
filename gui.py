@@ -401,6 +401,7 @@ if "compare_data" in st.session_state:
             fig_pie_nw = px.pie(
                 df_nw,
                 names="Action_Label",
+                color="Action_Label",
                 title="Distribution des actions (Sans Vent)",
                 hole=0.3,
             )
@@ -410,6 +411,7 @@ if "compare_data" in st.session_state:
             fig_pie_w = px.pie(
                 df_w,
                 names="Action_Label",
+                color="Action_Label",
                 title="Distribution des actions (Avec Vent)",
                 hole=0.3,
             )
