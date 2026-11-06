@@ -11,6 +11,7 @@ import cv2  # opencv-python
 import os, tempfile
 import imageio
 import random
+from typing import Optional
 
 # Variable globale pour stocker le modèle en mémoire
 model = None
@@ -124,7 +125,7 @@ def play_episode(enable_wind: bool = False, wind_power: float = 15.0):
     }
 
 @app.get("/play_compare")
-def play_compare(wind_power: float = 15.0, seed: int = None):
+def play_compare(wind_power: float = 15.0, seed: Optional[int] = None):
     """
     Simule deux parties à partir du MÊME état initial (seed identique) :
     une SANS vent et une AVEC vent.

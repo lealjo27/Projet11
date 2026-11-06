@@ -63,25 +63,32 @@ wind_power_comp = st.sidebar.select_slider(
         value=15
     )
 
+lock_seed = st.sidebar.checkbox("🔒 Garder la même partie (Même Seed)", value=True)
 # Bouton 2 : Comparaison
 if st.sidebar.button("⚔️ Comparer Même Partie (Sans Vent vs Avec Vent)"):
     with st.spinner("Exécution des 2 simulations (graine/seed identique)..."):
         try:
-            res = requests.get(
-                f"{API_URL}/play_compare",
-                params={"wind_power": wind_power_comp},
-                timeout=90,
-            )
-            if res.status_code == 200:
-                st.session_state["compare_data"] = res.json()
-                st.session_state.pop("play_data", None)
-                st.session_state["show_compare_stats"] = False
-                st.success("Parties comparées avec succès !")
-            else:
-                st.error(f"Erreur API : {res.text}")
-        except Exception as e:
-            st.error(f"Impossible de contacter l'API : {e}")
+            # Préparation des paramètres HTTP
+            params = {"wind_power": wind_power_comp}
+            
+            # Si l'option est cochée ET qu'une seed existe déjà en mémoire, on la transmet !
+            if lock_seed and "current_seed" in st.session_state:
+                params["seed"] = st.session_state["current_seed"]
 
+
+            # Appel API
+            res = requests.get(f"{API_URL}/play_compare", params=params, timeout=90)
+            
+            if res.status_code == 200:
+                            data = res.json()
+                            st.session_state["compare_data"] = data
+                            # On enregistre la seed reçue de l'API pour les clics futurs
+                            st.session_state["current_seed"] = data["seed"]
+                            st.success(f"Parties comparées avec succès (Seed #{data['seed']}) !")
+            else:
+                            st.error(f"Erreur API : {res.text}")
+        except Exception as e:
+                        st.error(f"Impossible d'atteindre l'API : {e}")
 
 # ------------------------------------------------------------------------------
 # FONCTION HELPER : DASHBOARD ANALYTIQUE PLOTLY (Reutilisable)
