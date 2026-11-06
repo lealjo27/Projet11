@@ -1,244 +1,199 @@
-import base64
 from contextlib import asynccontextmanager
-import gc
-import os
-import random
-import tempfile
-from typing import List, Optional
-
-import cv2
-import gymnasium as gym
-import imageio
 import numpy as np
+import gymnasium as gym
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
+from typing import List
 from stable_baselines3 import DQN
+import base64
+import cv2  # opencv-python
+
+import os, tempfile
+import imageio
+import random
+from typing import Optional
 
 # Variable globale pour stocker le modèle en mémoire
 model = None
 
-
 # Gestionnaire du cycle de vie (lifespan) recommandé par FastAPI
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-  global model
-  try:
-    model_path = "models/dqn_exp12_750k_final.zip"
-    if os.path.exists(model_path):
-      model = DQN.load(model_path)
-      print("Modèle LunarLander chargé avec succès.")
-    else:
-      print(f"Attention : Modèle introuvable à l'emplacement '{model_path}'.")
-  except Exception as e:
-    print(f"Erreur lors du chargement du modèle: {e}")
-  yield
-  # Nettoyage explicite à la fermeture de l'API
-  model = None
-  gc.collect()
+    global model
+    try:
+        model = DQN.load("models/dqn_exp12_750k_final.zip")
+        print("Modèle LunarLander chargé avec succès.")
+    except Exception as e:
+        print(f"Erreur de chargement du modèle: {e}")
+    yield
+    # Nettoyage si nécessaire à la fermeture de l'API
 
-
-# Initialisation de FastAPI avec le lifespan
+# 1. Initialisation de FastAPI avec le lifespan
 app = FastAPI(
     title="LunarLander RL API",
-    description=(
-        "API Backend pour l'inférence, la simulation et la comparaison sous"
-        " Gymnasium"
-    ),
+    description="API Backend pour interagir avec le modèle DQN entraîné sur LunarLander-v3",
     version="1.0",
-    lifespan=lifespan,
+    lifespan=lifespan
 )
-
-
 # Pydantic : validation des données d'entrée.
 class StateInput(BaseModel):
-  """Modèle de données pour l'état de l'environnement"""
+    """Modèle de données pour l'état de l'environnement"""
+    state: List[float] = Field(...,
+                               example=[0.0, 1.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 
+                               description="État de l'environnement LunarLander-v3 (8 dimensions)")
 
-  state: List[float] = Field(
-      ...,
-      example=[0.0, 1.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-      description="État continu de l'environnement LunarLander-v3 (8 variables)",
-  )
-
-
-@app.api_route("/", methods=["GET", "HEAD"])
+    
+@app.get("/")
 def home():
-  """Endpoint de santé pour vérifier que l'API fonctionne"""
-  return {"status": "ok", "message": "API LunarLander-v3 active"}
-
+    """Endpoint de santé pour vérifier que l'API fonctionne"""
+    return {"status": "ok", "message": "API LunarLander-v3 active"}
 
 @app.post("/predict")
 def predict_action(input_data: StateInput):
-  """Reçoit un état à 8 variables et renvoie l'action choisie par l'agent"""
-  if model is None:
-    raise HTTPException(status_code=500, detail="Modèle RL non disponible.")
-  if len(input_data.state) != 8:
-    raise HTTPException(
-        status_code=400,
-        detail=(
-            "L'état doit contenir exactement 8 valeurs (reçu :"
-            f" {len(input_data.state)})."
-        ),
-    )
+    """Reçoit un état à 8 variables et renvoie l'action choisie par l'agent"""
+    if model is None:
+        raise HTTPException(status_code=500, detail="Modèle non disponible.")
+    if len(input_data.state) != 8:
+        raise HTTPException(status_code=400, detail="L'état doit contenir exactement 8 valeurs. ( reçu : {len(input_data.state)} )")
 
-  obs = np.array(input_data.state, dtype=np.float32)
-  action, _ = model.predict(obs, deterministic=True)
-  return {"action": int(action)}
+    obs = np.array(input_data.state, dtype=np.float32)
+    action, _ = model.predict(obs, deterministic=True)
+    return {"action": int(action)}
 
 
 @app.get("/play")
 def play_episode(enable_wind: bool = False, wind_power: float = 15.0):
-  """Exécute un épisode complet avec ou sans vent et renvoie la vidéo MP4 en Base64."""
-  if model is None:
-    raise HTTPException(status_code=500, detail="Modèle RL non disponible.")
 
-  env_kwargs = {}
-  if enable_wind:
-    env_kwargs = {
-        "enable_wind": True,
-        "wind_power": wind_power,
-    }
+    """
+    Exécute un épisode complet avec ou sans vent.
+    - enable_wind: bool (Activer/Désactiver le vent)
+    - wind_power: float (Force du vent, par défaut 15.0)
+    """
+    if model is None:
+        raise HTTPException(status_code=500, detail="Modèle RL non disponible.")
 
-  env = gym.make("LunarLander-v3", render_mode="rgb_array", **env_kwargs)
-  obs, info = env.reset()
-
-  trajectory = []
-  frames = []
-  total_reward = 0.0
-  done = False
-
-  while not done:
-    action, _ = model.predict(obs, deterministic=True)
-
-    # Capture et redimensionnement (304x200) pour optimiser la mémoire RAM
-    frame = env.render()
-    frame_resized = cv2.resize(frame, (304, 200))
-    frames.append(frame_resized)
-
-    next_obs, reward, terminated, truncated, info = env.step(action)
-
-    trajectory.append({
-        "state": obs.tolist(),
-        "action": int(action),
-        "reward": float(reward),
-    })
-
-    total_reward += float(reward)
-    obs = next_obs
-    done = terminated or truncated
-
-  # Fermeture immédiate et nettoyage de l'environnement
-  env.close()
-  del env
-
-  # Encodage léger de la vidéo MP4
-  video_b64 = ""
-  if frames:
-    with tempfile.TemporaryDirectory() as tmp:
-      path = os.path.join(tmp, "episode.mp4")
-      imageio.mimsave(
-          path,
-          frames,
-          fps=30,
-          codec="libx264",
-          pixelformat="yuv420p",
-          macro_block_size=None,
-      )
-      with open(path, "rb") as f:
-        video_b64 = base64.b64encode(f.read()).decode("utf-8")
-
-  # Nettoyage explicite de la mémoire vive
-  del frames
-  gc.collect()
-
-  return {
-      "total_reward": total_reward,
-      "steps": len(trajectory),
-      "trajectory": trajectory,
-      "video": video_b64,
-  }
-
-
-@app.get("/play_compare")
-def play_compare(wind_power: float = 15.0, seed: Optional[int] = None):
-  """Exécute deux simulations à partir de la MÊME graine (seed) :
-
-  une partie SANS vent et une partie AVEC vent.
-  """
-  if model is None:
-    raise HTTPException(status_code=500, detail="Modèle RL non disponible.")
-
-  if seed is None:
-    seed = random.randint(0, 10000)
-
-  results = {}
-
-  for wind_enabled in [False, True]:
+    # Passage des paramètres de vent à l'environnement Gymnasium
     env_kwargs = {}
-    if wind_enabled:
-      env_kwargs = {
-          "enable_wind": True,
-          "wind_power": wind_power,
-      }
-
-    env = gym.make("LunarLander-v3", render_mode="rgb_array", **env_kwargs)
-    obs, info = env.reset(seed=seed)  # Seed identique fixée
-
+    if enable_wind:
+        env_kwargs = {
+            "enable_wind": True,
+            "wind_idx": 0,
+            "var_coord": wind_power
+        }
+    
+    # On spécifie render_mode="rgb_array" pour récupérer les images du jeu
+    env = gym.make("LunarLander-v3", render_mode="rgb_array")
+    obs, info = env.reset()
+    
     trajectory = []
     frames = []
+        
     total_reward = 0.0
     done = False
-
+    
     while not done:
-      action, _ = model.predict(obs, deterministic=True)
-
-      # Capture et redimensionnement léger (304x200)
-      frame = env.render()
-      frame_resized = cv2.resize(frame, (304, 200))
-      frames.append(frame_resized)
-
-      next_obs, reward, terminated, truncated, info = env.step(action)
-
-      trajectory.append({
-          "state": obs.tolist(),
-          "action": int(action),
-          "reward": float(reward),
-      })
-
-      total_reward += float(reward)
-      obs = next_obs
-      done = terminated or truncated
-
+        action, _ = model.predict(obs, deterministic=True)
+        
+        # Capture de l'image de la frame courante
+        frames.append(env.render())
+        
+        next_obs, reward, terminated, truncated, info = env.step(action)
+        
+        trajectory.append({
+            "state": obs.tolist(),
+            "action": int(action),
+            "reward": float(reward),
+            })
+        
+        total_reward += float(reward)
+        obs = next_obs
+        done = terminated or truncated
+        
     env.close()
-    del env
 
-    video_b64 = ""
-    if frames:
-      with tempfile.TemporaryDirectory() as tmp:
+    with tempfile.TemporaryDirectory() as tmp:
         path = os.path.join(tmp, "episode.mp4")
-        imageio.mimsave(
-            path,
-            frames,
-            fps=30,
-            codec="libx264",
-            pixelformat="yuv420p",
-            macro_block_size=None,
-        )
+        imageio.mimsave(path, frames, fps=30, codec="libx264",pixelformat="yuv420p")
         with open(path, "rb") as f:
-          video_b64 = base64.b64encode(f.read()).decode("utf-8")
-
-    key = "with_wind" if wind_enabled else "no_wind"
-    results[key] = {
+            video_b64 = base64.b64encode(f.read()).decode("utf-8")
+    
+    return {
         "total_reward": total_reward,
         "steps": len(trajectory),
         "trajectory": trajectory,
-        "video": video_b64,
+        "video": video_b64
     }
 
-    del frames
-    gc.collect()
+@app.get("/play_compare")
+def play_compare(wind_power: float = 15.0, seed: Optional[int] = None):
+    """
+    Simule deux parties à partir du MÊME état initial (seed identique) :
+    une SANS vent et une AVEC vent.
+    """
+    if model is None:
+        raise HTTPException(status_code=500, detail="Modèle RL non disponible.")
 
-  return {
-      "seed": seed,
-      "no_wind": results["no_wind"],
-      "with_wind": results["with_wind"],
-  }
+    # Si aucune seed n'est fournie, on en génère une aléatoirement
+    if seed is None:
+        seed = random.randint(0, 10000)
+
+    results = {}
+
+    for wind_enabled in [False, True]:
+        env_kwargs = {}
+        if wind_enabled:
+            env_kwargs = {
+                "enable_wind": True,
+                "wind_power": wind_power  # La force du vent (ex: 15.0)
+            }
+
+        env = gym.make("LunarLander-v3", render_mode="rgb_array", **env_kwargs)
+        obs, info = env.reset(seed=seed)  # Seed identique fixée ici !
+
+        trajectory = []
+        frames = []
+        total_reward = 0.0
+        done = False
+
+        while not done:
+            action, _ = model.predict(obs, deterministic=True)
+            frames.append(env.render())
+
+            next_obs, reward, terminated, truncated, info = env.step(action)
+
+            trajectory.append({
+                "state": obs.tolist(),
+                "action": int(action),
+                "reward": float(reward)
+            })
+
+            total_reward += float(reward)
+            obs = next_obs
+            done = terminated or truncated
+
+        env.close()
+
+ # Encodage de la vidéo MP4 via ton dossier/fichier temporaire (libx264/imageio)
+        video_b64 = ""
+        if frames:
+            with tempfile.TemporaryDirectory() as tmp:
+                path = os.path.join(tmp, "episode.mp4")
+                imageio.mimsave(
+                    path, frames, fps=30, codec="libx264", pixelformat="yuv420p"
+                )
+                with open(path, "rb") as f:
+                    video_b64 = base64.b64encode(f.read()).decode("utf-8")
+
+        key = "with_wind" if wind_enabled else "no_wind"
+        results[key] = {
+            "total_reward": total_reward,
+            "steps": len(trajectory),
+            "trajectory": trajectory,
+            "video": video_b64,
+        }
+
+    return {
+        "seed": seed,
+        "no_wind": results["no_wind"],
+        "with_wind": results["with_wind"],
+    }
